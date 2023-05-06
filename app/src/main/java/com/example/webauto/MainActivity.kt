@@ -9,6 +9,7 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.example.webauto.databinding.ActivityMainBinding
 import java.io.IOException
@@ -34,15 +35,22 @@ class MainActivity : AppCompatActivity() {
             pw = scan.next()
             initWebView()
         } catch(e: IOException) {
-            // 다이얼로그 생성
-            // if ok
-            pw = "example password"
-            val output = PrintStream(openFileOutput("pw.txt", MODE_APPEND))
-            output.println(pw)
-            output.close()
-            initWebView()
-            // if cancel
-            // initPW()
+            val builder = AlertDialog.Builder(this)
+            builder.setTitle("비번 입력")
+                .setPositiveButton("입력") {
+                        _, _ ->
+                    pw = "example password"
+                    val output = PrintStream(openFileOutput("pw.txt", MODE_APPEND))
+                    output.println(pw)
+                    output.close()
+                    initWebView()
+                }.setNegativeButton("취소") {
+                        dlg, _ ->
+                    dlg.dismiss()
+                    initPW()
+                }
+            val dlg = builder.create()
+            dlg.show()
         }
     }
 
