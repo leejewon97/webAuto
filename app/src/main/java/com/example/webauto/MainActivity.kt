@@ -1,24 +1,23 @@
 package com.example.webauto
 
 import android.annotation.SuppressLint
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.webkit.WebChromeClient
-import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.example.webauto.databinding.ActivityMainBinding
-import java.io.IOException
+import com.example.webauto.databinding.DialogEdittextBinding
+import java.io.FileNotFoundException
 import java.io.PrintStream
 import java.util.*
 
 @SuppressLint("SetJavaScriptEnabled")
 class MainActivity : AppCompatActivity() {
-
     lateinit var binding:ActivityMainBinding
     lateinit var pw:String
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -27,6 +26,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         initPW()
+//        initWebView()
     }
 
     private fun initPW() {
@@ -34,20 +34,28 @@ class MainActivity : AppCompatActivity() {
             val scan = Scanner(openFileInput("pw.txt"))
             pw = scan.next()
             initWebView()
-        } catch(e: IOException) {
+        } catch(e: FileNotFoundException) {
             val builder = AlertDialog.Builder(this)
-            builder.setTitle("비번 입력")
+            val edittextBinding = DialogEdittextBinding.inflate(layoutInflater)
+            val editText = edittextBinding.editText
+            builder.setTitle("비밀번호 입력")
+                .setView(edittextBinding.root)
                 .setPositiveButton("입력") {
                         _, _ ->
-                    pw = "example password"
-                    val output = PrintStream(openFileOutput("pw.txt", MODE_APPEND))
-                    output.println(pw)
-                    output.close()
-                    initWebView()
+                    pw = editText.text.toString()
+                    if (pw.isBlank()) {
+                        Toast.makeText(this, "비밀번호를 입력해주세요.", Toast.LENGTH_SHORT).show()
+                        initPW()
+                    } else {
+                        val output = PrintStream(openFileOutput("pw.txt", MODE_APPEND))
+                        output.print(pw)
+                        output.close()
+                        initWebView()
+                    }
                 }.setNegativeButton("취소") {
                         dlg, _ ->
                     dlg.dismiss()
-                    initPW()
+                    finish()
                 }
             val dlg = builder.create()
             dlg.show()
@@ -85,12 +93,10 @@ class MainActivity : AppCompatActivity() {
     inner class MyWebViewClient : WebViewClient() {
         override fun onPageFinished(view: WebView, url: String) {
             super.onPageFinished(view, url)
-//            Thread.sleep(3000)
-            Toast.makeText(this@MainActivity, "loaded", Toast.LENGTH_SHORT).show()
+            binding.progressBar.visibility = View.GONE
             Log.d("check", url)
             view.loadUrl("javascript:document.getElementById('u_img_device').click();")
             view.evaluateJavascript("document.querySelector('#form1 > div.modalpop > div.popupwrap.deviceconnect > div > p:nth-child(7) > input').value = '$pw';"){}
-
 //            #form1 > div.modalpop > div.popupwrap.deviceconnect > div > p:nth-child(7) > input
 //            #captcha_str
 //            Log.d("view check", "$view")
